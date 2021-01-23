@@ -22,6 +22,10 @@ How to set your MAS:
 ### Project Setup
 Follow garmin setup for eclipse and Connect IQ plugin: https://developer.garmin.com/connect-iq/sdk/
 
+### Adding devices
+Open the sdk manager (Connect IQ menu), update the sdk version, go to device tab and download compatible devices.
+Open the manifest.xml file in eclipse, select the 'build target' tab (bottom tab bar)
+
 ### Running on simulator
 Click `Run Configuration` and create a configuration for your device (supported devices list is stored in `manifest.xml`. Then launch the app using this configuration.
 

@@ -11,18 +11,17 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 
     var mas = Application.getApp().getProperty("mas");
 
-    hidden var mMas = 0;
-    hidden var lapMas = 0;
-    hidden var nbData = 0;
-    hidden var sumMas = 0;
+    hidden var lapMas = 0.0; //current lap average speed in % MAS
+    hidden var startTime = 0.0; //elapsed time during the 3 second delay
+    hidden var startDist = 0.0; //elapsed distance during the 3 second delay
 	hidden var newLap = false;
-	hidden var newLapTime = 0;
+	hidden var newLapTime = 0.0;
 	hidden var timerState = STOPPED;
 	hidden var fixedLapTimeOffset;
-	hidden var lapTimeOffset = 3; //3s
-	hidden var lastLapMas = 0;
+	hidden var lapTimeOffset = 3.0; //3s
+	hidden var lastLapMas = 0.0;
 	hidden var fieldLabel = Ui.loadResource(Rez.Strings.FieldName);
-	
+
     //! constructor
     function initialize() {
     
@@ -34,6 +33,7 @@ class LastLapPcMASView extends Ui.SimpleDataField {
     	
         SimpleDataField.initialize();
         setLabel();
+   		lastLapMas = lastLapMas.format("%.0f"); // remove decimals
     }
 
     function setLabel(){
@@ -49,7 +49,7 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 
 	// occurs when pressing lap button
    	function onTimerLap() {
-   		lastLapMas = lapMas; //show last lap value
+   		lastLapMas = lapMas.format("%.0f"); //show last lap value
         ResetData();
 	   	//Sys.println("Timer lap");
 	   	newLap = true; //Start a new calculation after the delay 
@@ -74,7 +74,7 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 	function onTimerStop()
 	{
 		timerState = STOPPED;
-   		lastLapMas = lapMas; //show last lap value
+   		lastLapMas = lapMas.format("%.0f"); //show last lap value
       	ResetData();
  	    //Sys.println("Timer stopped");
 	}
@@ -103,9 +103,8 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 
    function ResetData() {
        	lapMas=0;
-    	nbData = 0;
-    	sumMas = 0;
-    	mMas = 0;
+        startTime=0;
+        startDist=0;
    }		
 
     //! Return the field to display.
@@ -118,37 +117,51 @@ class LastLapPcMASView extends Ui.SimpleDataField {
    
  		if (timerState == STOPPED)
  		{
-        	return lastLapMas.format("%d") + "%";
+        	return lastLapMas + "%";
 		}
 
 		if (timerState == PAUSED)
 		{
-        	return lastLapMas.format("%d") + "%";
+        	return lastLapMas + "%";
 		}
  	
  		// start a new calculation ?
  		if (newLap){
  			newLap = false;
- 			newLapTime = info.elapsedTime; //save start time
+ 			newLapTime = info.elapsedTime; //save start time to calculate the delay
 	 	    //Sys.println("Timer lap event at " + newLapTime);
  		}
 
+        if (info == null || info.currentSpeed == null){
+        	return lastLapMas + "%";
+        }
+
     	//wait for the delay
-        if (info == null || info.currentSpeed == null || (info.elapsedTime - newLapTime) < fixedLapTimeOffset){
-        	mMas = 0;
-        	return lastLapMas.format("%d") + "%";
+        if ((info.elapsedTime - newLapTime) < fixedLapTimeOffset){
+        	//display previous lap speed while waiting
+        	return lastLapMas + "%";
+        }
+
+        //we calculate now
+        if (startTime == 0){
+            //3s delay ended, we start to calculate. Save the elapsed time and distance.
+            startTime = info.elapsedTime;
+            startDist = info.elapsedDistance;
+	 	    //Sys.println("Start calculation : time = " + startTime + ", dist = " + startDist);
+	 	    return lastLapMas + "%";
         }
 	
-    	//calculate average speed
+    	//calculate average speed, but display previous lap speed
 		try {
-	        	var speedkmh = info.currentSpeed*3.6;
-	        	mMas = speedkmh / mas * 100;
-		        sumMas += mMas;
-		        nbData++;
-
-		        lapMas = sumMas/nbData;
-			    Sys.println("Time: " + info.elapsedTime + "  speed: " + info.currentSpeed + "  %mas: " + mMas + "  nbData: " + nbData + "  lap mas: " + lapMas);
-		        return lastLapMas.format("%d") + "%";
+				var fixedDistKm = (info.elapsedDistance - startDist) / 1000.0; //dist in m
+				var fixedTimeH = (info.elapsedTime - startTime) / 1000.0 / 3600.0; //time is in ms
+                var averageSpeedKmh = fixedDistKm / fixedTimeH;
+		        lapMas = averageSpeedKmh / mas * 100.0;
+		        
+		        //Sys.println("Time: " + info.elapsedTime + " dist: " + info.elapsedDistance + "  speed: " + info.currentSpeed + "fixed dist km: " + fixedDistKm + " fixed time h: " + fixedTimeH + " calcAvgSpeed: " + averageSpeedKmh+ " %mas: " + lapMas  + " ( " + lapMas.format("%.0f") + "%" + ")");
+		        
+		        //display previous lap speed
+		        return lastLapMas + "%";
 		 }
 		catch( ex ) {
 		    return "Err";
