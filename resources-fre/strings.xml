@@ -1,3 +1,4 @@
 <strings>
-   <string id="FieldName">%VMA dernier circuit</string>
+   <string id="AppName">LastLapPcMAS</string>
+   <string id="FieldName">%VMA der cir</string>
 </strings>

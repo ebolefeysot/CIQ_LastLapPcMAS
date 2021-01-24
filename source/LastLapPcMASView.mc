@@ -10,6 +10,8 @@ class LastLapPcMASView extends Ui.SimpleDataField {
     }
 
     var mas = Application.getApp().getProperty("mas");
+    var nbDecimal = Application.getApp().getProperty("nbDecimal");
+    var showPercentChar = Application.getApp().getProperty("showPercentChar");
 
     hidden var lapMas = 0.0; //current lap average speed in % MAS
     hidden var startTime = 0.0; //elapsed time during the 3 second delay
@@ -28,12 +30,32 @@ class LastLapPcMASView extends Ui.SimpleDataField {
     	//calculate the time delay in ms before starting calculating average speed
     	fixedLapTimeOffset = lapTimeOffset * 1000 - 500; //precision is delay + 0-1s, I cut in two by removing 500 ms
     	if (fixedLapTimeOffset < 0){
-    		fixedLapTimeOffset = 0;
+    		fixedLapTimeOffset = 0.0;
     	}
     	
         SimpleDataField.initialize();
         setLabel();
-   		lastLapMas = lastLapMas.format("%.0f"); // remove decimals
+   		lastLapMas = formatResult(lastLapMas);
+    }
+
+    function formatResult(value){
+        var result = value;
+ 
+        //if value is a speed value, format it
+        if (result == 0){
+        	result = "...";
+        }
+        else
+        {
+            var format = "%." + nbDecimal + "f";
+            //Sys.println("format: " + format);
+            result = value.format(format);
+        }
+        
+        if (showPercentChar){
+            result += "%";
+        }
+        return result;
     }
 
     function setLabel(){
@@ -49,7 +71,7 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 
 	// occurs when pressing lap button
    	function onTimerLap() {
-   		lastLapMas = lapMas.format("%.0f"); //show last lap value
+   		lastLapMas = formatResult(lapMas); //show last lap value
         ResetData();
 	   	//Sys.println("Timer lap");
 	   	newLap = true; //Start a new calculation after the delay 
@@ -74,7 +96,7 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 	function onTimerStop()
 	{
 		timerState = STOPPED;
-   		lastLapMas = lapMas.format("%.0f"); //show last lap value
+   		lastLapMas = formatResult(lapMas); //show last lap value
       	ResetData();
  	    //Sys.println("Timer stopped");
 	}
@@ -102,9 +124,9 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 	}
 
    function ResetData() {
-       	lapMas=0;
-        startTime=0;
-        startDist=0;
+       	lapMas=0.0;
+        startTime=0.0;
+        startDist=0.0;
    }		
 
     //! Return the field to display.
@@ -117,12 +139,12 @@ class LastLapPcMASView extends Ui.SimpleDataField {
    
  		if (timerState == STOPPED)
  		{
-        	return lastLapMas + "%";
+        	return lastLapMas;
 		}
 
 		if (timerState == PAUSED)
 		{
-        	return lastLapMas + "%";
+        	return lastLapMas;
 		}
  	
  		// start a new calculation ?
@@ -133,13 +155,13 @@ class LastLapPcMASView extends Ui.SimpleDataField {
  		}
 
         if (info == null || info.currentSpeed == null){
-        	return lastLapMas + "%";
+        	return lastLapMas;
         }
 
     	//wait for the delay
         if ((info.elapsedTime - newLapTime) < fixedLapTimeOffset){
         	//display previous lap speed while waiting
-        	return lastLapMas + "%";
+        	return lastLapMas;
         }
 
         //we calculate now
@@ -148,7 +170,7 @@ class LastLapPcMASView extends Ui.SimpleDataField {
             startTime = info.elapsedTime;
             startDist = info.elapsedDistance;
 	 	    //Sys.println("Start calculation : time = " + startTime + ", dist = " + startDist);
-	 	    return lastLapMas + "%";
+	 	    return lastLapMas;
         }
 	
     	//calculate average speed, but display previous lap speed
@@ -161,7 +183,7 @@ class LastLapPcMASView extends Ui.SimpleDataField {
 		        //Sys.println("Time: " + info.elapsedTime + " dist: " + info.elapsedDistance + "  speed: " + info.currentSpeed + "fixed dist km: " + fixedDistKm + " fixed time h: " + fixedTimeH + " calcAvgSpeed: " + averageSpeedKmh+ " %mas: " + lapMas  + " ( " + lapMas.format("%.0f") + "%" + ")");
 		        
 		        //display previous lap speed
-		        return lastLapMas + "%";
+		        return lastLapMas;
 		 }
 		catch( ex ) {
 		    return "Err";
