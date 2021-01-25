@@ -1,4 +1,4 @@
 <strings>
-    <string id="AppName">LastLapPcMAS</string>
-    <string id="FieldName">last lap %MAS</string>
+	<!-- This string is displayed on watch above the field -->
+    <string id="FieldName">L LAP %MAS</string>
 </strings>

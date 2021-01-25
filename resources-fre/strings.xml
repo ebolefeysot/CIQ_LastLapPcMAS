@@ -1,4 +1,4 @@
 <strings>
-   <string id="AppName">LastLapPcMAS</string>
-   <string id="FieldName">%VMA der cir</string>
+	<!-- Nom affiché au dessus du champ sur la montre -->
+    <string id="FieldName">%VMA D CIR</string>
 </strings>
