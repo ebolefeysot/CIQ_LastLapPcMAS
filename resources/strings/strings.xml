@@ -1,4 +1,4 @@
 <strings>
 	<!-- This string is displayed on watch above the field -->
-    <string id="FieldName">L LAP %MAS</string>
+    <string id="FieldName">LAST LAP %MAS</string>
 </strings>
